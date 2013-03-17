@@ -18,6 +18,7 @@ $(document).ready(function(){
 
   var setRadioVisibility = _.partial(setVisibility, radioDiv);
 
+  Tabla.LOGGING = true;
   var tabla = new Tabla('Table 1.')
     , any = Tabla.any;
 

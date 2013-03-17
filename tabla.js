@@ -1,8 +1,12 @@
 (function(context) {
 
-  var Valuable = function(elem) { this.elem = elem; }
-  Valuable.prototype.val = function(){
+  var log = function() {
+    if (Tabla.LOGGING) {
+      var args = _.toArray(arguments);
+      console.log.apply(console, args);
+    }
   }
+
   // Supported parameters:
   // (elem, fn)
   // (elem, string)
@@ -78,27 +82,28 @@
   }
 
   TP.evaluateRules = function() {
-    console.log('Evaluating rules for ' + this.name + ' started.');
+    log(this.name + ' started.');
     var me = this
       , hasMatchedRule = false;
-    _.each(this.rules, function(rule) {
+    _.each(this.rules, function(rule, i) {
+      log('  ' + (i+1) + '. Rule started.');
       var ruleMatches = true;
-      _.each(rule.terms, function(term) {
+      _.each(rule.terms, function(term, j) {
         if (!ruleMatches) { return; }
         var result = term.evaluate();
-        console.log(term.toString(), result);
+        log('    ' + (j+1) + '. Term:', term.toString(), result);
         if (!result) { ruleMatches = false; }
       });
       if (ruleMatches) {
-        console.log('Rule: succeeded. Running action with args:', rule.args);
+        log('  ' + (i+1) + '. Rule: succeeded. Running action with args:', rule.args);
         hasMatchedRule = true;
         me.action.apply(undefined, rule.args);
       } else {
-        console.log('Rule: failed.')
+        log('  ' + (i+1) + '. Rule: failed.')
       }
     });
     if (!hasMatchedRule && this.elseRule) {
-      console.log('Running elseRule action with args:', this.elseRule.args);
+      log('Running elseRule action with args:', this.elseRule.args);
       this.action.apply(undefined, this.elseRule.args);
     }
   };
