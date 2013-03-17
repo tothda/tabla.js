@@ -1,4 +1,4 @@
-describe("hidden div based on a checkbox's state'", function(){
+describe("A case where a checkbox controls a div's visiblity.'", function(){
   var tabla, checkbox, div;
 
   beforeEach(function(){
@@ -35,5 +35,62 @@ describe("hidden div based on a checkbox's state'", function(){
     expect(div).toBeHidden();
     checkbox.trigger('click');
     expect(div).toBeVisible();
+  });
+});
+
+describe("The support for enter/exit action.", function(){
+  var tabla, checkboxA, checkboxB, list;
+
+  beforeEach(function(){
+    loadFixtures('example-2.html');
+    checkboxA = $(':input[name="option-a"]')
+    checkboxB = $(':input[name="option-b"]')
+    list = $('ul');
+
+    var showLetters = function() {
+      _.each(arguments, function(letter){
+        list.find(':contains("'+letter+'")').show();
+      });
+    };
+
+    var hideLetters = function() {
+      _.each(arguments, function(letter){
+        list.find(':contains("'+letter+'")').hide();
+      });
+    };
+
+    tabla = (new Tabla('Table 2.'))
+             .withInputElements(checkboxA, checkboxB)
+             .withEnterAction(showLetters)
+             .withExitAction(hideLetters)
+             .when(false, false).args()
+             .when(false, true ).args('B')
+             .when(true,  false).args('A')
+             .when(true,  true ).args('A', 'B', 'C').startFromHere()
+             .build();
+
+    checkboxA.change(tabla);
+    checkboxB.change(tabla);
+    tabla.call();
+  });
+
+  it("should show only D at the beginning", function(){
+    expect(list.find('li:visible').text()).toBe('D');
+  });
+
+  it("should show AD if checkboxA selected", function(){
+    checkboxA.trigger('click');
+    expect(list.find('li:visible').text()).toBe('AD');
+  });
+
+  it("should show BD if checkboxB selected", function(){
+    checkboxB.trigger('click');
+    expect(list.find('li:visible').text()).toBe('BD');
+  });
+
+  it("should show ABCD if both checkboxA and checkboxB selected", function(){
+    checkboxA.trigger('click');
+    checkboxB.trigger('click');
+    expect(list.find('li:visible').text()).toBe('ABCD');
   });
 });

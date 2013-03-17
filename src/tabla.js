@@ -40,12 +40,43 @@
     return this.elem.selector + '===' + this.value;
   };
 
-  var Rule = function(terms){
+  var Rule = function(table, terms){
+    this.table = table;
     this.terms = terms;
   };
 
   Rule.prototype.args = function(args) {
     this.args = args;
+  };
+
+  Rule.prototype.evaluate = function() {
+    var ruleMatches = true;
+    _.each(this.terms, function(term, j) {
+      if (!ruleMatches) { return; }
+      var result = term.evaluate();
+        log('    ' + (j+1) + '. Term:', term.toString(), result);
+        if (!result) { ruleMatches = false; }
+    });
+    return ruleMatches;
+  };
+
+  Rule.prototype.runEnterAction = function() {
+    this.table.enterAction.apply(undefined, this.args);
+  };
+
+  Rule.prototype.runExitAction = function() {
+    this.table.exitAction.apply(undefined, this.args);
+  };
+
+  Rule.prototype.runAction = function() {
+    if (this.table.action) {
+      this.table.action.apply(undefined, this.args);
+    } else {
+      // In this case we assume the table has an enter and an exit action.
+      var exitingRule = this.table.matching;
+      if (exitingRule) { exitingRule.runExitAction(); }
+      this.runEnterAction();
+    }
   };
 
   var Tabla = function(name) {
@@ -81,25 +112,33 @@
     var me = this
       , hasMatchedRule = false;
     _.each(this.rules, function(rule, i) {
+      if (hasMatchedRule) { return; }
       log('  ' + (i+1) + '. Rule started.');
-      var ruleMatches = true;
-      _.each(rule.terms, function(term, j) {
-        if (!ruleMatches) { return; }
-        var result = term.evaluate();
-        log('    ' + (j+1) + '. Term:', term.toString(), result);
-        if (!result) { ruleMatches = false; }
-      });
-      if (ruleMatches) {
+      var isMatching = rule.evaluate();
+
+      if (isMatching) {
         log('  ' + (i+1) + '. Rule: succeeded. Running action with args:', rule.args);
         hasMatchedRule = true;
-        me.action.apply(undefined, rule.args);
+        if (me.matching === rule) {
+          log("State hasn't changed. No need for action.'");
+        } else {
+          rule.runAction();
+          me.matching = rule;
+        }
       } else {
         log('  ' + (i+1) + '. Rule: failed.')
       }
     });
+
     if (!hasMatchedRule && this.elseRule) {
       log('Running elseRule action with args:', this.elseRule.args);
       this.action.apply(undefined, this.elseRule.args);
+    }
+  };
+
+  TP._buildRule = function(){
+    if (this.rule && !this.rule.elseRule) {
+      this.rules.push(this.rule);
     }
   };
 
@@ -113,6 +152,21 @@
     return this;
   };
 
+  TP.withEnterAction = function(fn) {
+    this.enterAction = fn;
+    return this;
+  }
+
+  TP.withExitAction = function(fn) {
+    this.exitAction = fn;
+    return this;
+  }
+
+  TP.startFromHere = function() {
+    this.matching = this.rule;
+    return this;
+  };
+
   TP.when = function() {
     var args = _.toArray(arguments)
       , terms = _.chain(this.inputs)
@@ -120,25 +174,26 @@
                  .map(function(pair) { return new Term(pair[0], pair[1])})
                  .value();
 
-    this.rule = new Rule(terms);
+    this._buildRule();
+    this.rule = new Rule(this, terms);
     return this;
   }
 
   TP.otherwise = function() {
-    this.rule = this.elseRule = new Rule();
+    this._buildRule();
+    this.rule = this.elseRule = new Rule(this);
+    this.rule.elseRule = true;
     return this;
   }
 
   TP.args = function() {
     var args = _.toArray(arguments);
     this.rule.args(args);
-    if (!this.elseRule) {
-      this.rules.push(this.rule);
-    }
     return this;
   }
 
   TP.build = function() {
+    this._buildRule();
     var me = this;
     return function() {
       me.evaluateRules();
