@@ -24,11 +24,15 @@ describe("hidden div based on a checkbox's state'", function(){
     tabla.call();
   });
 
-  it("is hidden at the beginning", function(){
+  it("div is hidden at the beginning", function(){
     expect(div).toBeHidden();
   });
 
-  it("is shown when the checkbox got checked", function(){
+  it("div shown/hidden when the checkbox got checked/unchecked", function(){
+    checkbox.trigger('click');
+    expect(div).toBeVisible();
+    checkbox.trigger('click');
+    expect(div).toBeHidden();
     checkbox.trigger('click');
     expect(div).toBeVisible();
   });
