@@ -37,12 +37,7 @@
   Term.prototype.evaluate = function(){ return this.fn.call(); };
 
   Term.prototype.toString = function(){
-    return _.template(
-      "(<%= selector %> === <%= value%>)"
-    , {
-      selector: this.elem.selector,
-      value: this.value
-    });
+    return this.elem.selector + '===' + this.value;
   };
 
   var Rule = function(terms){
