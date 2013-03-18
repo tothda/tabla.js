@@ -26,7 +26,40 @@ describe("Tabla", function(){
       tabla();
       expect(spy).not.toHaveBeenCalled();
     })
+  });
 
+  describe("With an otherwise rule + enter/exit action", function(){
+    var tabla, enterSpy, exitSpy, fn1Result, fn2Result;
+
+    beforeEach(function(){
+      var fn1 = function() { return fn1Result; };
+      var fn2 = function() { return fn2Result; };
+      enterSpy = jasmine.createSpy();
+      exitSpy = jasmine.createSpy();
+      tabla = (new Tabla()).
+        withEnterAction(enterSpy).
+        withExitAction(exitSpy).
+        whenMatches(fn1).args('fn1').startFromHere().
+        whenMatches(fn2).args('fn2').
+        otherwise().args('otherwise').
+        build();
+    });
+
+    it("First: exitAction of start rule, then enter action of next", function(){
+      fn1Result = false;
+      fn2Result = true;
+      tabla();
+      expect(exitSpy).toHaveBeenCalledWith('fn1');
+      expect(enterSpy).toHaveBeenCalledWith('fn2');
+    });
+
+    it("Calls the otherwise action if none of the rules match.", function(){
+      fn1Result = false;
+      fn2Result = false;
+      tabla();
+      expect(exitSpy).toHaveBeenCalledWith('fn1');
+      expect(enterSpy).toHaveBeenCalledWith('otherwise');
+    });
   });
 });
 

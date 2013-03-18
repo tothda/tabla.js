@@ -52,7 +52,7 @@
 
     if (!hasMatchedRule && this.elseRule) {
       log('Running elseRule action with args:', this.elseRule.args);
-      this.action.apply(undefined, this.elseRule.args);
+      this.elseRule.runAction();
     }
   };
 
