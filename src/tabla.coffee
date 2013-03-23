@@ -1,10 +1,5 @@
 ((context) ->
-  Tabla = (name) ->
-    @rules = []
-    @name = name
-    @
 
-  TP = Tabla::
   createPredicate = (input, val) ->
     ->
       val is ((if input.is(":checked") then "1" else "0"))
@@ -22,83 +17,87 @@
       i++
       result
 
-  TP.evaluateRules = ->
-    log @name + " started."
-    me = this
-    hasMatchedRule = false
-    _.each @rules, (rule, i) ->
-      return  if hasMatchedRule
-      log "  " + (i + 1) + ". Rule started."
-      isMatching = rule.evaluate()
-      if isMatching
-        log "  " + (i + 1) + ". Rule: succeeded. Running action with args:", rule._args
-        hasMatchedRule = true
-        if me.matching is rule
-          log "State hasn't changed. No need for action.'"
+  class Tabla
+    constructor: (@name) ->
+      @rules = []
+
+    evaluateRules: ->
+      log @name + " started."
+      me = this
+      hasMatchedRule = false
+      _.each @rules, (rule, i) ->
+        return  if hasMatchedRule
+        log "  " + (i + 1) + ". Rule started."
+        isMatching = rule.evaluate()
+        if isMatching
+          log "  " + (i + 1) + ". Rule: succeeded. Running action with args:", rule._args
+          hasMatchedRule = true
+          if me.matching is rule
+            log "State hasn't changed. No need for action.'"
+          else
+            rule.runAction()
+            me.matching = rule
         else
-          rule.runAction()
-          me.matching = rule
-      else
-        log "  " + (i + 1) + ". Rule: failed."
+          log "  " + (i + 1) + ". Rule: failed."
 
-    if not hasMatchedRule and @elseRule
-      log "Running elseRule action with args:", @elseRule._args
-      @elseRule.runAction()
-      @matching = @elseRule
+      if not hasMatchedRule and @elseRule
+        log "Running elseRule action with args:", @elseRule._args
+        @elseRule.runAction()
+        @matching = @elseRule
 
-  TP._buildRule = ->
-    @rules.push @rule  if @rule and not @rule.elseRule
+    _buildRule: ->
+      @rules.push @rule  if @rule and not @rule.elseRule
 
-  TP.withInputElements = (inputs...)->
-    @inputs = inputs
-    this
+    withInputElements: (inputs...)->
+      @inputs = inputs
+      this
 
-  TP.withAction = (fn) ->
-    @action = fn
-    this
+    withAction: (fn) ->
+      @action = fn
+      this
 
-  TP.withEnterAction = (fn) ->
-    @enterAction = fn
-    this
+    withEnterAction: (fn) ->
+      @enterAction = fn
+      this
 
-  TP.withExitAction = (fn) ->
-    @exitAction = fn
-    this
+    withExitAction: (fn) ->
+      @exitAction = fn
+      this
 
-  TP.startFromHere = ->
-    @matching = @rule
-    this
+    startFromHere: ->
+      @matching = @rule
+      this
 
-  TP.whenMatches = (terms...)->
-    terms = _.chain(terms).map((fn) ->
-      new Term(fn)
-    ).value()
-    @rule = new Rule(this, terms)
-    this
+    whenMatches: (terms...)->
+      terms = _.chain(terms).map((fn) ->
+        new Term(fn)
+      ).value()
+      @rule = new Rule(this, terms)
+      this
 
-  TP.when = (args...)->
-    terms = _.chain(@inputs).zip(args).map((pair) ->
-      new Term(pair[0], pair[1])
-    ).value()
-    @_buildRule()
-    @rule = new Rule(this, terms)
-    this
+    when: (args...)->
+      terms = _.chain(@inputs).zip(args).map((pair) ->
+        new Term(pair[0], pair[1])
+      ).value()
+      @_buildRule()
+      @rule = new Rule(this, terms)
+      this
 
-  TP.otherwise = ->
-    @_buildRule()
-    @rule = @elseRule = new Rule(this)
-    @rule.elseRule = true
-    this
+    otherwise: ->
+      @_buildRule()
+      @rule = @elseRule = new Rule(this)
+      @rule.elseRule = true
+      this
 
-  TP.args = (args...)->
-    @rule.args args
-    this
+    args: (args...)->
+      @rule.args args
+      this
 
-  TP.build = ->
-    @_buildRule()
-    me = this
-    ->
-      me.evaluateRules()
+    build: ->
+      @_buildRule()
+      me = this
+      ->
+        me.evaluateRules()
 
   Tabla.any = ->
     true
