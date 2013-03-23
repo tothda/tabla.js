@@ -1,22 +1,5 @@
 ((context) ->
 
-  createPredicate = (input, val) ->
-    ->
-      val is ((if input.is(":checked") then "1" else "0"))
-
-  combineWith = (combineFn, colls...) ->
-    l = colls[0].length
-    result = []
-    i = 0
-
-    while i < l
-      args = _.map(colls, (coll) ->
-        coll[i]
-      )
-      result.push combineFn.apply(`undefined`, args)
-      i++
-      result
-
   class Tabla
     constructor: (@name) ->
       @rules = []
