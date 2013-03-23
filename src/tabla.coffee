@@ -107,43 +107,43 @@
     if Tabla.LOGGING
       console.log.apply console, args
 
-  
-  # Supported parameters:
-  # (fn) - with binary function (returns true/false)
-  # (elem, fn) - with predicate function (binary fn with one parameter)
-  # (elem, string)
-  Term = (args...) ->
-    val = (elem) ->
-      return elem.is(":checked")  if elem.is(":checkbox")
-      return elem.filter(":checked").val()  if elem.is(":radio")
-      elem.val()
 
-    throw new TypeError("Unexpected arguments.")  if args.length is 0
-    me = this
-    firstArg = args[0]
-    if args.length is 1
-      if $.isFunction(firstArg)
-        @fn = firstArg
-        return
+  class Term
+    # Supported parameters:
+    # (fn) - with binary function (returns true/false)
+    # (elem, fn) - with predicate function (binary fn with one parameter)
+    # (elem, string)
+    constructor: (args...) ->
+      val = (elem) ->
+        return elem.is(":checked")  if elem.is(":checkbox")
+        return elem.filter(":checked").val()  if elem.is(":radio")
+        elem.val()
+
+      throw new TypeError("Unexpected arguments.")  if args.length is 0
+      me = this
+      firstArg = args[0]
+      if args.length is 1
+        if $.isFunction(firstArg)
+          @fn = firstArg
+          return
+        else
+          throw new TypeError("Argument error: should be a function.")
+      @elem = firstArg
+      if $.isFunction(args[1])
+        @predicate = args[1]
+        @fn = ->
+          me.predicate val(me.elem)
       else
-        throw new TypeError("Argument error: should be a function.")
-    @elem = firstArg
-    if $.isFunction(args[1])
-      @predicate = args[1]
-      @fn = ->
-        me.predicate val(me.elem)
-    else
-      @value = args[1]
-      @fn = ->
-        val(me.elem) is me.value
-    @
+        @value = args[1]
+        @fn = ->
+          val(me.elem) is me.value
 
-  Term::evaluate = ->
-    @fn.call()
+    evaluate: ->
+      @fn.call()
 
-  Term::toString = ->
-    return @elem.selector + "===" + @value  if @elem
-    "(fn)"
+    toString: ->
+      return @elem.selector + "===" + @value  if @elem
+      "(fn)"
 
   class Rule
     constructor: (@table, @terms) ->
