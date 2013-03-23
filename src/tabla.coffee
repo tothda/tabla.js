@@ -6,20 +6,20 @@
 
     evaluateRules: ->
       log @name + " started."
-      me = this
+
       hasMatchedRule = false
-      _.each @rules, (rule, i) ->
+      _.each @rules, (rule, i) =>
         return  if hasMatchedRule
         log "  " + (i + 1) + ". Rule started."
         isMatching = rule.evaluate()
         if isMatching
           log "  " + (i + 1) + ". Rule: succeeded. Running action with args:", rule._args
           hasMatchedRule = true
-          if me.matching is rule
+          if @matching is rule
             log "State hasn't changed. No need for action.'"
           else
             rule.runAction()
-            me.matching = rule
+            @matching = rule
         else
           log "  " + (i + 1) + ". Rule: failed."
 
@@ -31,63 +31,51 @@
     _buildRule: ->
       @rules.push @rule  if @rule and not @rule.elseRule
 
-    withInputElements: (inputs...)->
+    withInputElements: (inputs...) ->
       @inputs = inputs
-      this
+      @
 
-    withAction: (fn) ->
-      @action = fn
-      this
+    withAction: (@action) -> @
 
-    withEnterAction: (fn) ->
-      @enterAction = fn
-      this
+    withEnterAction: (@enterAction) -> @
 
-    withExitAction: (fn) ->
-      @exitAction = fn
-      this
+    withExitAction: (@exitAction) -> @
 
-    startFromHere: ->
+    startFromHere: () ->
       @matching = @rule
-      this
+      @
 
-    whenMatches: (terms...)->
-      terms = _.chain(terms).map((fn) ->
-        new Term(fn)
-      ).value()
-      @rule = new Rule(this, terms)
-      this
+    whenMatches: (fns...)->
+      terms = (new Term(fn) for fn in fns)
+      @rule = new Rule(@, terms)
+      @
 
     when: (args...)->
-      terms = _.chain(@inputs).zip(args).map((pair) ->
-        new Term(pair[0], pair[1])
+      terms = _.chain(@inputs).zip(args).map(([input, val]) ->
+        new Term(input, val)
       ).value()
       @_buildRule()
-      @rule = new Rule(this, terms)
-      this
+      @rule = new Rule(@, terms)
+      @
 
     otherwise: ->
       @_buildRule()
-      @rule = @elseRule = new Rule(this)
+      @rule = @elseRule = new Rule(@)
       @rule.elseRule = true
-      this
+      @
 
     args: (args...)->
       @rule.args args
-      this
+      @
 
     build: ->
       @_buildRule()
-      me = this
-      ->
-        me.evaluateRules()
+      => @evaluateRules()
 
-  Tabla.any = ->
-    true
+  Tabla.any = -> true
 
   log = (args...) ->
-    if Tabla.LOGGING
-      console.log.apply console, args
+    console.log.apply console, args if Tabla.LOGGING
 
 
   class Term
@@ -102,7 +90,7 @@
         elem.val()
 
       throw new TypeError("Unexpected arguments.")  if args.length is 0
-      me = this
+
       firstArg = args[0]
       if args.length is 1
         if $.isFunction(firstArg)
@@ -113,15 +101,15 @@
       @elem = firstArg
       if $.isFunction(args[1])
         @predicate = args[1]
-        @fn = ->
-          me.predicate val(me.elem)
+        @fn = => @predicate(val(@elem))
       else
         @value = args[1]
-        @fn = ->
-          val(me.elem) is me.value
+        @fn = => val(@elem) is @value
 
     evaluate: ->
       @fn.call()
+
+    isMatching: Term::evaluate
 
     toString: ->
       return @elem.selector + "===" + @value  if @elem
@@ -135,13 +123,9 @@
       @_args = args
 
     evaluate: ->
-      ruleMatches = true
-      _.each @terms, (term, j) ->
-        return  unless ruleMatches
-        result = term.evaluate()
-        log "    " + (j + 1) + ". Term:", term.toString(), result
-        ruleMatches = false  unless result
-      ruleMatches
+      firstFailed = _.find @terms, (term) -> not term.isMatching()
+      log "Failed term:", firstFailed.toString() if firstFailed
+      !!!firstFailed
 
     runEnterAction:  ->
       @table.enterAction.apply `undefined`, @_args
