@@ -20,7 +20,7 @@
       )
       result.push combineFn.apply(`undefined`, args)
       i++
-    result
+      result
 
   TP.evaluateRules = ->
     log @name + " started."
@@ -145,40 +145,36 @@
     return @elem.selector + "===" + @value  if @elem
     "(fn)"
 
-  Rule = (table, terms) ->
-    @table = table
-    @terms = terms
-    @_args = []
-    @
+  class Rule
+    constructor: (@table, @terms) ->
+      @_args = []
 
-  Rule::args = (args) ->
-    @_args = args
+    args: (args) ->
+      @_args = args
 
-  Rule::evaluate = ->
-    ruleMatches = true
-    _.each @terms, (term, j) ->
-      return  unless ruleMatches
-      result = term.evaluate()
-      log "    " + (j + 1) + ". Term:", term.toString(), result
-      ruleMatches = false  unless result
+    evaluate: ->
+      ruleMatches = true
+      _.each @terms, (term, j) ->
+        return  unless ruleMatches
+        result = term.evaluate()
+        log "    " + (j + 1) + ". Term:", term.toString(), result
+        ruleMatches = false  unless result
+      ruleMatches
 
-    ruleMatches
+    runEnterAction:  ->
+      @table.enterAction.apply `undefined`, @_args
 
-  Rule::runEnterAction = ->
-    @table.enterAction.apply `undefined`, @_args
+    runExitAction: ->
+      @table.exitAction.apply `undefined`, @_args
 
-  Rule::runExitAction = ->
-    @table.exitAction.apply `undefined`, @_args
-
-  Rule::runAction = ->
-    if @table.action
-      @table.action.apply `undefined`, @_args
-    else
-      
-      # In this case we assume the table has an enter and an exit action.
-      exitingRule = @table.matching
-      exitingRule.runExitAction()  if exitingRule
-      @runEnterAction()
+    runAction: ->
+      if @table.action
+        @table.action.apply `undefined`, @_args
+      else
+        # In this case we assume the table has an enter and an exit action.
+        exitingRule = @table.matching
+        exitingRule.runExitAction()  if exitingRule
+        @runEnterAction()
 
   Tabla.Term = Term
   Tabla.Rule = Rule
