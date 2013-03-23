@@ -37,7 +37,7 @@
       var isMatching = rule.evaluate();
 
       if (isMatching) {
-        log('  ' + (i+1) + '. Rule: succeeded. Running action with args:', rule.args);
+        log('  ' + (i+1) + '. Rule: succeeded. Running action with args:', rule._args);
         hasMatchedRule = true;
         if (me.matching === rule) {
           log("State hasn't changed. No need for action.'");
@@ -51,8 +51,9 @@
     });
 
     if (!hasMatchedRule && this.elseRule) {
-      log('Running elseRule action with args:', this.elseRule.args);
+      log('Running elseRule action with args:', this.elseRule._args);
       this.elseRule.runAction();
+      this.matching = this.elseRule;
     }
   };
 
