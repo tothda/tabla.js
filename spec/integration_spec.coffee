@@ -1,5 +1,5 @@
-checkBox = (elem) -> elem.prop('checked', 'checked')
-uncheckBox = (elem) -> elem.prop('checked', '')
+checkBox = (elem) -> elem.prop('checked', true)
+uncheckBox = (elem) -> elem.prop('checked', false)
 
 describe "A case where a checkbox controls a div's visiblity.'", ->
   beforeEach ->

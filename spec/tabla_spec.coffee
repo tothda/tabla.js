@@ -74,13 +74,13 @@ describe "Tabla.JQueryInputTerm", ->
   it "handles checkbox with boolean value", ->
     @term = new Tabla.JQueryInputTerm(@checkbox, true)
     expect(@term.evaluate()).toBeTruthy()
-    @checkbox.prop('checked', '')
+    @checkbox.prop('checked', false)
     expect(@term.evaluate()).toBeFalsy()
 
   it "handles checkbox with function", ->
     @term = new Tabla.JQueryInputTerm(@checkbox, -> true)
     expect(@term.evaluate()).toBeTruthy()
-    @checkbox.prop('ckecked', '')
+    @checkbox.prop('ckecked', false)
     expect(@term.evaluate()).toBeTruthy()
 
   it "presents itself nicely with toString()", ->

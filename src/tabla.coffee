@@ -103,7 +103,6 @@
       else
         @value = predicateOrValue
         @fn = => @val() is @value
-      @
 
     type: ->
       if @elem.is('select') then 'select'
