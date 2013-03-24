@@ -1,3 +1,6 @@
+checkBox = (elem) -> elem.prop('checked', 'checked')
+uncheckBox = (elem) -> elem.prop('checked', '')
+
 describe "A case where a checkbox controls a div's visiblity.'", ->
   beforeEach ->
     loadFixtures "example-1.html"
@@ -20,11 +23,11 @@ describe "A case where a checkbox controls a div's visiblity.'", ->
     expect(@div).toBeHidden()
 
   it "div shown/hidden when the checkbox got checked/unchecked", ->
-    @checkbox.trigger "click"
+    checkBox(@checkbox)
     expect(@div).toBeVisible()
-    @checkbox.trigger "click"
+    uncheckBox(@checkbox)
     expect(@div).toBeHidden()
-    @checkbox.trigger "click"
+    checkBox(@checkbox)
     expect(@div).toBeVisible()
 
 describe "The support for enter/exit action.", ->

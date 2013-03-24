@@ -52,7 +52,7 @@
 
     when: (args...)->
       terms = _.chain(@inputs).zip(args).map(([input, val]) ->
-        new Term(input, val)
+        new JQueryInputTerm(input, val)
       ).value()
       @_buildRule()
       @rule = new Rule(@, terms)
@@ -77,18 +77,8 @@
   log = (args...) ->
     console.log.apply console, args if Tabla.LOGGING
 
-
   class Term
-    # Supported parameters:
-    # (fn) - with binary function (returns true/false)
-    # (elem, fn) - with predicate function (binary fn with one parameter)
-    # (elem, string)
     constructor: (args...) ->
-      val = (elem) ->
-        return elem.is(":checked")  if elem.is(":checkbox")
-        return elem.filter(":checked").val()  if elem.is(":radio")
-        elem.val()
-
       throw new TypeError("Unexpected arguments.")  if args.length is 0
 
       firstArg = args[0]
@@ -98,22 +88,35 @@
           return
         else
           throw new TypeError("Argument error: should be a function.")
-      @elem = firstArg
-      if $.isFunction(args[1])
-        @predicate = args[1]
-        @fn = => @predicate(val(@elem))
-      else
-        @value = args[1]
-        @fn = => val(@elem) is @value
 
-    evaluate: ->
-      @fn.call()
+    evaluate: -> @fn.call()
 
     isMatching: Term::evaluate
 
+    toString: -> "(fn)"
+
+  class JQueryInputTerm extends Term
+    constructor: (@elem, predicateOrValue) ->
+      if _.isFunction(predicateOrValue)
+        @predicate = predicateOrValue
+        @fn = => @predicate(@val())
+      else
+        @value = predicateOrValue
+        @fn = => @val() is @value
+      @
+
+    type: ->
+      if @elem.is('select') then 'select'
+      else @elem.attr('type')
+
+    val: ->
+      if @elem.is(':checkbox') then @elem.is(':checked')
+      else if @elem.is(':radio') then @elem.filter(':checked').val()
+      else @elem.val()
+
     toString: ->
-      return @elem.selector + "===" + @value  if @elem
-      "(fn)"
+      "JQueryTerm: " + @type() + " [" + @elem.selector + "]" +
+      ", value: " + @val()  + ", expected value: " + @value
 
   class Rule
     constructor: (@table, @terms) ->
@@ -143,6 +146,7 @@
         @runEnterAction()
 
   Tabla.Term = Term
+  Tabla.JQueryInputTerm = JQueryInputTerm
   Tabla.Rule = Rule
   context.Tabla = Tabla
 ) window

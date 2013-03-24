@@ -51,25 +51,46 @@ describe "Tabla", ->
       expect(@exitSpy).toHaveBeenCalledWith "fn1"
       expect(@enterSpy).toHaveBeenCalledWith "otherwise"
 
+describe "Tabla.JQueryInputTerm", ->
+  J = Tabla.JQueryInputTerm
+
+  beforeEach ->
+    @checkbox = $("<input type=\"checkbox\" checked=\"checked\"/>")
+    
+  it "is defined", ->
+    expect(Tabla.JQueryInputTerm).toBeDefined()
+
+  it "knows the input's type", ->
+    expect(new J($('<input type="checkbox" />'), "").type()).toBe("checkbox")
+    expect(new J($('<input type="text" />'), "").type()).toBe("text")
+    expect(new J($('<input type="select" />'), "").type()).toBe("select")
+    expect(new J($('<input type="radio" />'), "").type()).toBe("radio")
+    expect(new J($('<select></select>'), "").type()).toBe("select")
+
+  it "knows its input's value'", ->
+    expect(new J($('<input type="checkbox" checked="checked" />'), '').val()).toBe(true)
+    expect(new J($('<input type="input" value="foo" />'), '').val()).toBe("foo")
+
+  it "handles checkbox with boolean value", ->
+    @term = new Tabla.JQueryInputTerm(@checkbox, true)
+    expect(@term.evaluate()).toBeTruthy()
+    @checkbox.prop('checked', '')
+    expect(@term.evaluate()).toBeFalsy()
+
+  it "handles checkbox with function", ->
+    @term = new Tabla.JQueryInputTerm(@checkbox, -> true)
+    expect(@term.evaluate()).toBeTruthy()
+    @checkbox.prop('ckecked', '')
+    expect(@term.evaluate()).toBeTruthy()
+
+  it "presents itself nicely with toString()", ->
+    term = new J(@checkbox, true)
+    expect(term.toString()).toBe("JQueryTerm: checkbox [], value: true, expected value: true")
+    term = new J($('<input type="checkbox" />'), true)
+    expect(term.toString()).toBe("JQueryTerm: checkbox [], value: false, expected value: true")
+    
+
 describe "Tabla.Term", ->
-  it "Cannot be instantiated without argument.", ->
-    expect(-> new Tabla.Term()).toThrow new TypeError("Unexpected arguments.")
-
-  describe "jQuery element + value", ->
-    beforeEach ->
-      @checkbox = $("<input type=\"checkbox\" checked=\"checked\"/>")
-      @term = new Tabla.Term(@checkbox, true)
-
-    it "Cannot be instantiated..", ->
-      expect new Tabla.Term(@checkbox, true)
-
-    it "Checkbox: when checked then matches true", ->
-      expect(@term.evaluate()).toBeTruthy()
-
-    it "Checkbox: when not checked then matches false ", ->
-      @checkbox.trigger "click"
-      expect(@term.evaluate()).toBeFalsy()
-
   describe "With binary function", ->
     it "Evaluates to the same value as the fn.", ->
       falseTerm = new Tabla.Term(-> false)
@@ -78,5 +99,5 @@ describe "Tabla.Term", ->
       expect(trueTerm.evaluate()).toBeTruthy()
 
 describe "Tabla.Rule", ->
-  it "Can be instantiated", ->
-    expect(new Tabla.Rule()).not.toBe null
+  it "is defined.", ->
+    expect(Tabla.Rule).toBeDefined()
